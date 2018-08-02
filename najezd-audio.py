@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
 from flask import Flask, request, render_template
-import configparser, os, sys, strings
+import configparser, os, sys, string
 
 # configuration parsing
 cfg = configparser.ConfigParser()
 cfg.read(os.path.join(os.path.dirname(os.path.realpath(__file__)), "najezd-audio.conf"))
 cfgvar = {}
 # TODO: load configuration in loop
-cfgvar['audio-dir'] = cfg.get('global', 'audio-dir')
+cfgvar['audio-dir'] = cfg.get('general', 'audio-dir')
+cfgvar['debug'] = cfg.get('general', 'debug')
 cfgvar['driver'] = cfg.get('database', 'driver')
 cfgvar['host'] = cfg.get('database', 'host')
 cfgvar['username'] = cfg.get('database', 'username')
@@ -51,21 +52,24 @@ e = ErrorHandling()
 
 # database drivers
 if cfgvar['driver'] == 'mysql':
-    sys.path.insert(0, os.path.join('drivers', 'mysql_flask_driver.py'))
-    import MySQLDriver from mysql_flask_driver as DBDriver
+    sys.path.insert(0, 'drivers')
+    from mysql_flask_driver import MySQLDriver as DBDriver
 
 else:
     e.throwMsg("Driver %s not found!" % cfgvar['driver'], 3, 129)
 
-db = DBDriver()
-db.Connect()
+# we need to run it in Flask aplication context because we are using our own module
+with app.app_context():
+    db = DBDriver(cfgvar, e)
+    cur = db.Connect()
 
 @app.route('/get-album/')
 @app.route('/get-album/<code>')
 def get_album(code=None):
-    ticketid = db.Run('''SELECT id FROM tickets WHERE ticket = "oVnKoO4wwc"''')
+    ticketid = db.Run('''SELECT id FROM tickets WHERE ticket = "oVnKoO4wwc"''', cur)
     return render_template('najezd-audio.html', code=code)
 
 # run app
 if __name__ == "__main__":
-    app.run()
+    debug = cfgvar['debug'] in ['true', 'True', 'TRUE', 'yes', 'Yes', 'YES', '1']
+    app.run(host='0.0.0.0', debug=debug)
