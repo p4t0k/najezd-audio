@@ -66,10 +66,11 @@ with app.app_context():
 @app.route('/get-album/')
 @app.route('/get-album/<code>')
 def get_album(code=None):
+    # use this code for testing >> oVnKoO4wwc << and delete it after ;)
     if re.match(r'^\w{10}$', code):
-        query = 'SELECT id FROM tickets WHERE ticket = "%s"' % code
-        ticketid = db.Run(query)
-        if ticketid > 0:
+        query = '''SELECT id, expired FROM tickets WHERE ticket = "%s"''' % code
+        ticketid, expired = db.Run(query)
+        if ticketid > 0 and not expired:
             return render_template('najezd-audio.html', code=code)
         else:
             return render_template('najezd-404.html', code=code)
