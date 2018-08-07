@@ -41,11 +41,11 @@ def genTickets(num=1):
 #bcrypt.hashpw('test'.encode('utf-8'), bcrypt.gensalt( 12 ))
 #bcrypt.checkpw('tcest'.encode('utf-8'), b'[b(2$wFuhUv.b0cULfhGNBzHn6.cCWXPtvLjimqV59sUksc../K25Aqf4S'))]
 
-# Flask logic
+# instantiation of Flask
 
 app = Flask(__name__)
 
-## instantiation of our classes
+## instantiation of our internal classes
 
 # notifications
 e = ErrorHandling()
@@ -61,13 +61,20 @@ else:
 # we need to run it in Flask aplication context because we are using our own module
 with app.app_context():
     db = DBDriver(cfgvar, e)
-    cur = db.Connect()
+    db.Connect()
 
 @app.route('/get-album/')
 @app.route('/get-album/<code>')
 def get_album(code=None):
-    ticketid = db.Run('''SELECT id FROM tickets WHERE ticket = "oVnKoO4wwc"''', cur)
-    return render_template('najezd-audio.html', code=code)
+    if re.match(r'^\w{10}$', code):
+	query = '''SELECT id FROM tickets WHERE ticket = "%s"''' % code
+	ticketid = db.Run(query)
+	if ticketid > 0:
+	    return render_template('najezd-audio.html', code=code)
+	else:
+	    return render_template('najezd-404.html', code=code)
+    else:
+    	return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
 
 # run app
 if __name__ == "__main__":
