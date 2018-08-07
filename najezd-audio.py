@@ -67,14 +67,14 @@ with app.app_context():
 @app.route('/get-album/<code>')
 def get_album(code=None):
     if re.match(r'^\w{10}$', code):
-	query = '''SELECT id FROM tickets WHERE ticket = "%s"''' % code
-	ticketid = db.Run(query)
-	if ticketid > 0:
-	    return render_template('najezd-audio.html', code=code)
-	else:
-	    return render_template('najezd-404.html', code=code)
+        query = 'SELECT id FROM tickets WHERE ticket = "%s"' % code
+        ticketid = db.Run(query)
+        if ticketid > 0:
+            return render_template('najezd-audio.html', code=code)
+        else:
+            return render_template('najezd-404.html', code=code)
     else:
-    	return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
+        return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
 
 # run app
 if __name__ == "__main__":
