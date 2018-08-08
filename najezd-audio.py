@@ -75,9 +75,8 @@ def get_album(code=None):
             if not expired:
                 return render_template('najezd-audio.html', code=code)
             else:
-                return render_template('najezd-404.html', code=code)
+                return render_template('najezd-410.html', code=code)
         else:
-            # TODO: fix this - we want to print info about expiration
             return render_template('najezd-404.html', code=code)
     else:
         return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
