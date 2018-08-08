@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from flask import Flask, request, render_template
-import configparser, os, sys, string
+import configparser, os, sys, string, re
 
 # configuration parsing
 cfg = configparser.ConfigParser()
@@ -69,10 +69,15 @@ def get_album(code=None):
     # use this code for testing >> oVnKoO4wwc << and delete it after ;)
     if re.match(r'^\w{10}$', code):
         query = '''SELECT id, expired FROM tickets WHERE ticket = "%s"''' % code
-        ticketid, expired = db.Run(query)
-        if ticketid > 0 and not expired:
-            return render_template('najezd-audio.html', code=code)
+        query_ret, data = db.Run(query)
+        if query_ret:
+            ticketid, expired = data[0]
+            if not expired:
+                return render_template('najezd-audio.html', code=code)
+            else:
+                return render_template('najezd-404.html', code=code)
         else:
+            # TODO: fix this - we want to print info about expiration
             return render_template('najezd-404.html', code=code)
     else:
         return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")

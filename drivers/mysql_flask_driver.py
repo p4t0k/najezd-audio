@@ -21,8 +21,10 @@ class MySQLDriver:
     def Run(self, query):
         #print('[*] inside of Run method')
         try:
-            output = self.conn.connection.cursor().execute(query)
-            return output
+            cur = self.conn.connection.cursor()
+            retval = cur.execute(query)
+            output = cur.fetchall()
+            return (retval, output)
         except:
             self.e.throwMsg("problem while running DB Query: %s" % str(query), 2)
 
