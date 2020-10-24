@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
+from datetime import timedelta
+from mutagen.mp3 import MP3
 import configparser, os, sys, string, re
 
 # configuration parsing
@@ -34,8 +36,8 @@ def genTickets(num=1):
     chars = string.ascii_letters + string.digits
     pw_arr = []
     for i in range(num):
-        password = "".join(choice(chars) for x in range(10))
-        pw_arr += [password]
+        code = "".join(choice(chars) for x in range(10))
+        pw_arr += [code]
     return pw_arr
 
 #bcrypt.hashpw('test'.encode('utf-8'), bcrypt.gensalt( 12 ))
@@ -65,7 +67,7 @@ with app.app_context():
 
 @app.route('/get-album/')
 @app.route('/get-album/<code>')
-def get_album(code=None):
+def get_album(code=""):
     # use this code for testing >> oVnKoO4wwc << and delete it after ;)
     if re.match(r'^\w{10}$', code):
         query = '''SELECT id, expired FROM tickets WHERE ticket = "%s"''' % code
@@ -73,13 +75,31 @@ def get_album(code=None):
         if query_ret:
             ticketid, expired = data[0]
             if not expired:
-                return render_template('najezd-audio.html', code=code)
+                # TODO: get all dirs (albums) from database, list them (only audio files) recursively, get audio length for each file, and add those files and their length info to list/hash/list-of-lists variable called `audio_files`
+
+                #song = MP3("/tmp/najezd-mp3/test.mp3")
+                #print(str(timedelta(minutes=round(round(song.info.length,2),1))))
+                #s=song.info.length%60
+                #m=((t-s)/60)
+                return render_template('najezd-audio.html', code=code, audio_files=audio_files)
             else:
                 return render_template('najezd-410.html', code=code)
         else:
             return render_template('najezd-404.html', code=code)
     else:
-        return render_template('najezd-500.html', "nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
+        return render_template('najezd-500.html', reason="nesprávný počet znaků, nebo kód obsahuje nepovolené znaky")
+
+@app.route('/static/<path:filename>', methods=['GET', 'POST'])
+@app.route('/download/<code>/<path:filename>', methods=['GET', 'POST'])
+def download(code, filename):
+    if 'static' in request.script_root:
+        download_dir = os.path.join(current_app.root_path, 'static')
+        return send_from_directory(directory=download_dir, filename=filename)
+    else:
+        if re.match(r'^\w{10}$', code):
+            #download_dir = os.path.join(cfgvar['audio-dir'])
+            download_dir = os.path.join('/tmp/najezd-mp3')
+            return send_from_directory(directory=download_dir, filename=filename)
 
 # run app
 if __name__ == "__main__":
